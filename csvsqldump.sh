@@ -56,9 +56,9 @@ if [ -z "${tables}" ]; then
     tables=$(mysql -u ${USERNAME} -p${PASSWORD} -B -N -e "SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = '${DBNAME}'")
 fi
 
-DBNAME=dv
-USERNAME=root
-PASSWORD=root
+# DBNAME=mysql
+# USERNAME=root
+# PASSWORD=root
 TEMPFILE=${OUTPUTDIR}/tempfile.csv
 
 for table in $tables; do
@@ -67,10 +67,10 @@ for table in $tables; do
     if [ -x $fname ]; then
         echo "Do you wish to overwrite?"
     fi
-    STATUS=$(mysql -u ${USERNAME} -p${PASSWORD} ${DBNAME} -B -N -e "SELECT DISTINCT COLUMN_NAME FROM information_schema.COLUMNS C WHERE table_name = '${table}';" 2> | paste -s -d, - > $fname)
-    test ${PIPESTATUS[0]} -eq 0 && echo "Error encountered ... ${STATUS}"; rm -rf $fname; exit 1;
-    #echo "" >> $fname
-    mysql -u ${USERNAME} -p${PASSWORD} ${DBNAME} -B -N -e "SELECT * INTO OUTFILE '${TEMPFILE}' FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '\"' FROM ${table};"
+    STATUS=$(mysql -u ${USERNAME} -p${PASSWORD} ${DBNAME} -B -N -e "SELECT DISTINCT COLUMN_NAME FROM information_schema.COLUMNS C WHERE table_name = '${table}';" ) 2>&1 | paste -s -d, - > $fname
+    if [ ${PIPESTATUS[0]} -ne "0" ]; then echo "Error encountered ... ${STATUS}"; rm -rf $fname; exit 1; fi
+    STATUS=$((mysql -u ${USERNAME} -p${PASSWORD} ${DBNAME} -B -N -e "SELECT * INTO OUTFILE '${TEMPFILE}' FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '\"' FROM ${table};" ) 2>&1)
+    if [ ${PIPESTATUS[0]} -ne "0" ]; then echo "Error encountered ... ${STATUS}"; rm -rf $fname; continue; fi
     cat ${TEMPFILE} >> $fname
     rm -rf ${TEMPFILE}
 done;
