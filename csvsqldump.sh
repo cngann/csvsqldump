@@ -1,16 +1,18 @@
 #!/bin/bash
-usage() { 
+usage() {
+    CLIENT=`which mysql`
     echo "Dump SQL data to CSV format with column names in a header row." 1>&2;
-    echo "Usage: $0 -u <username> -p <password> -d <database> [-h <host>] [-t <table>] [-o <outputdir>]" 1>&2; 
+    echo "Usage: $0 -u <username> -p <password> -d <database> [-h <host>] [-t <table>] [-o <outputdir>] [-c <mysql_client>" 1>&2; 
     echo "Defaults:
-    host        localhost
-    table       all tables from specified database
-    outputdir   /tmp
+    host            localhost
+    table           all tables from specified database
+    outputdir       /tmp
+    mysql_client    ${CLIENT}
     " 1>&2; 
     exit 1; 
 }
 
-while getopts ":u:p:h:d:t:o:" option; do
+while getopts ":u:p:h:d:t:o:c:" option; do
     case "${option}" in
         u)
             USERNAME=${OPTARG}
@@ -29,6 +31,9 @@ while getopts ":u:p:h:d:t:o:" option; do
             ;;
         o)
             OUTPUTDIR=${OPTARG}
+            ;;
+        c)
+            MYSQL=${OPTARG}
             ;;
         *)
             usage
@@ -50,6 +55,10 @@ fi
 
 if [ -z "${OUTPUTDIR}" ]; then
     OUTPUTDIR=/tmp
+fi
+
+if [ -z "${MYSQL}" ]; then
+    MYSQL=`which mysql`
 fi
 
 if [ -z "${tables}" ]; then
